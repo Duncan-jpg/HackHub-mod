@@ -1,0 +1,29 @@
+name: Extract a Zip File
+
+on:
+  push:
+    paths:
+      - 'uploads/**.zip'
+  workflow_dispatch:
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unzip the file
+        run: |
+          rm -r uploads/extracted
+          filename=$(basename -s .zip *.zip)
+          unzip *.zip
+          rm *.zip
+          mv $filename temp
+          mv temp/out/* .
+          rm -r temp
+      - name: Commit changes
+        run: |
+          git config --local user.email "github-actions@users.noreply.github.com"
+          git config --local user.name "github-actions"
+          git add .
+          git commit -m "Unzipped files"
+          git push origin main
