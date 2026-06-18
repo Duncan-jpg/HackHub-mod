@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NetInfiltrator</title>
+    <style>
+        * { box-sizing: border-box; }
+        html, body {
+            margin: 0;
+            height: 100%;
+            background: #0a0f0a;
+            color: #c8f7c8;
+            font-family: "Consolas", "Courier New", monospace;
+            font-size: 13px;
+        }
+        body { display: flex; flex-direction: column; }
+        header {
+            padding: 10px 14px;
+            border-bottom: 1px solid #1d3a1d;
+            background: #0d160d;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 15px;
+            letter-spacing: 2px;
+            color: #39ff14;
+            text-shadow: 0 0 6px rgba(57, 255, 20, 0.5);
+        }
+        header p { margin: 2px 0 0; font-size: 11px; color: #5fa15f; }
+        .conn {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 8px;
+            padding: 10px 14px;
+            border-bottom: 1px solid #1d3a1d;
+        }
+        .conn label { display: block; font-size: 10px; color: #5fa15f; margin-bottom: 3px; }
+        .conn input {
+            width: 100%;
+            padding: 6px 8px;
+            background: #07120a;
+            border: 1px solid #245024;
+            color: #c8f7c8;
+            font-family: inherit;
+            font-size: 12px;
+            border-radius: 3px;
+        }
+        .conn input:focus { outline: none; border-color: #39ff14; }
+        .conn button {
+            align-self: end;
+            padding: 7px 16px;
+            background: #184218;
+            border: 1px solid #39ff14;
+            color: #39ff14;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        .conn button:hover { background: #39ff14; color: #041404; }
+        #status {
+            padding: 6px 14px;
+            font-size: 11px;
+            min-height: 16px;
+            border-bottom: 1px solid #1d3a1d;
+        }
+        .ok { color: #39ff14; }
+        .err { color: #ff5b5b; }
+        .main { flex: 1; display: flex; min-height: 0; }
+        .tree {
+            width: 50%;
+            overflow: auto;
+            padding: 10px 14px;
+            border-right: 1px solid #1d3a1d;
+        }
+        .viewer {
+            width: 50%;
+            overflow: auto;
+            padding: 10px 14px;
+            white-space: pre-wrap;
+            color: #b7e7b7;
+        }
+        .viewer .empty { color: #4d7a4d; }
+        ul { list-style: none; margin: 0; padding-left: 16px; }
+        .node { padding: 2px 0; cursor: default; user-select: none; }
+        .node .icon { display: inline-block; width: 16px; }
+        .file { cursor: pointer; color: #c8f7c8; }
+        .file:hover { color: #39ff14; }
+        .folder { color: #7fd17f; }
+        .muted { color: #4d7a4d; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>NetInfiltrator</h1>
+        <p>Remote file-system browser &mdash; feed it an IP (whois), user &amp; password (mhack).</p>
+    </header>
+
+    <div class="conn">
+        <div>
+            <label>TARGET IP</label>
+            <input id="ip" placeholder="184.51.33.12" autocomplete="off" />
+        </div>
+        <div>
+            <label>USER</label>
+            <input id="user" placeholder="jefflezos" autocomplete="off" />
+        </div>
+        <div>
+            <label>PASSWORD</label>
+            <input id="pass" type="password" placeholder="********" autocomplete="off" />
+        </div>
+        <button id="connect">CONNECT</button>
+    </div>
+
+    <div id="status" class="muted">Awaiting connection&hellip;</div>
+
+    <div class="main">
+        <div class="tree" id="tree"><span class="muted">No host connected.</span></div>
+        <div class="viewer" id="viewer"><span class="empty">Select a file to view its contents.</span></div>
+    </div>
+
+    <script>
+        var currentIp = "";
+
+        function call(fn) {
+            var args = Array.prototype.slice.call(arguments, 1);
+            return Promise.resolve(window[fn].apply(null, args));
+        }
+
+        function setStatus(text, cls) {
+            var el = document.getElementById("status");
+            el.textContent = text;
+            el.className = cls || "muted";
+        }
+
+        function openFile(node) {
+            var viewer = document.getElementById("viewer");
+            if (node.data === undefined || node.data === null) {
+                viewer.innerHTML = '<span class="empty">(empty file)</span>';
+            } else {
+                viewer.textContent = node.data;
+            }
+            var fullName = node.extension ? node.name + "." + node.extension : node.name;
+            call("reportFileOpen", currentIp, fullName);
+        }
+
+        function renderNodes(nodes) {
+            var ul = document.createElement("ul");
+            nodes.forEach(function (node) {
+                var li = document.createElement("li");
+                var label = document.createElement("div");
+                label.className = "node";
+                var fullName = node.extension ? node.name + "." + node.extension : node.name;
+
+                if (node.isFolder) {
+                    label.innerHTML = '<span class="icon">&#128193;</span>';
+                    var span = document.createElement("span");
+                    span.className = "folder";
+                    span.textContent = fullName;
+                    label.appendChild(span);
+                    li.appendChild(label);
+                    var kids = node.children || [];
+                    if (kids.length > 0) {
+                        li.appendChild(renderNodes(kids));
+                    } else {
+                        var emptyUl = document.createElement("ul");
+                        var emptyLi = document.createElement("li");
+                        emptyLi.className = "node muted";
+                        emptyLi.textContent = "(empty)";
+                        emptyUl.appendChild(emptyLi);
+                        li.appendChild(emptyUl);
+                    }
+                } else {
+                    label.innerHTML = '<span class="icon">&#128196;</span>';
+                    var fspan = document.createElement("span");
+                    fspan.className = "file";
+                    fspan.textContent = fullName;
+                    fspan.onclick = function () { openFile(node); };
+                    label.appendChild(fspan);
+                    li.appendChild(label);
+                }
+                ul.appendChild(li);
+            });
+            return ul;
+        }
+
+        function connect() {
+            var ip = document.getElementById("ip").value;
+            var user = document.getElementById("user").value;
+            var pass = document.getElementById("pass").value;
+            setStatus("Connecting to " + (ip || "?") + "\u2026", "muted");
+
+            call("infiltrate", ip, user, pass).then(function (res) {
+                var tree = document.getElementById("tree");
+                var viewer = document.getElementById("viewer");
+                if (!res || !res.ok) {
+                    tree.innerHTML = '<span class="muted">No host connected.</span>';
+                    viewer.innerHTML = '<span class="empty">Select a file to view its contents.</span>';
+                    setStatus((res && res.error) || "Connection failed.", "err");
+                    return;
+                }
+                currentIp = res.ip;
+                setStatus("Connected to " + res.host + " (" + res.ip + ") \u2014 owner: " + res.owner, "ok");
+                tree.innerHTML = "";
+                tree.appendChild(renderNodes(res.tree || []));
+                viewer.innerHTML = '<span class="empty">Select a file to view its contents.</span>';
+            });
+        }
+
+        document.getElementById("connect").onclick = connect;
+        document.getElementById("pass").addEventListener("keydown", function (e) {
+            if (e.key === "Enter") connect();
+        });
+    </script>
+</body>
+</html>
