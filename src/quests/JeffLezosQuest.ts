@@ -110,27 +110,23 @@ export class JeffLezosQuest extends Quest<JeffLezosData> {
             const url = (e.url || "").toLowerCase();
             const name = (e.siteName || "").toLowerCase();
             if (url.includes(ARMAZON.host) || name === "armazon") {
-                this.SetData("visited", true);
                 this.completeObjective("visit_armazon");
             }
         });
 
         this.Events.on("MillionairHack.MainframeHacked", (e) => {
             if (e.host === ARMAZON.host) {
-                this.SetData("hacked", true);
                 this.completeObjective("hack_mainframe");
             }
         });
 
         this.Events.on("MillionairHack.WalletOpened", (e) => {
             if (e.ip === ARMAZON.ip) {
-                this.SetData("walletFound", true);
                 this.completeObjective("find_wallet");
             }
         });
 
         this.Events.on("MillionairHack.FundsTransferred", () => {
-            this.SetData("transferred", true);
             this.completeObjective("transfer_funds");
         });
     }
