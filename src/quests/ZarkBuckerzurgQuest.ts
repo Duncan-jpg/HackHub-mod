@@ -98,25 +98,21 @@ export class ZarkBuckerzurgQuest extends Quest<ZarkData> {
     OnObjectivesStart() {
         this.Events.on("MillionairHack.SystemBreached", (e) => {
             if (e.ip === BETANET.ip) {
-                this.SetData("fsAccess", true);
                 this.completeObjective("access_fs");
             }
         });
 
         this.Events.on("MillionairHack.ZarkLoggedIn", () => {
-            this.SetData("loggedIn", true);
             this.completeObjective("login_zark");
         });
 
         this.Events.on("MillionairHack.ZarkBlackmailed", () => {
-            this.SetData("blackmailed", true);
             this.completeObjective("blackmail_zark");
         });
 
         // Also accept blackmail sent the classic way: an email to Zark.
         this.Events.on("Mail.Sent", (e) => {
             if ((e.to || "").toLowerCase().includes(ZARK.blackmailEmail)) {
-                this.SetData("blackmailed", true);
                 this.completeObjective("blackmail_zark");
             }
         });
