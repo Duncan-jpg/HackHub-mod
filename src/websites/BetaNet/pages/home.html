@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Beta</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #1a0608;
+            color: #ffe9ea;
+        }
+        .topbar {
+            background: linear-gradient(90deg, #b3060f, #e01b24);
+            padding: 12px 22px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 2px 10px rgba(224, 27, 36, 0.4);
+        }
+        .brand { font-size: 26px; font-weight: 900; color: #fff; letter-spacing: -1px; }
+        .brand .o {
+            display: inline-block;
+            width: 22px; height: 22px;
+            border: 4px solid #fff;
+            border-radius: 50%;
+            margin-left: 2px;
+            vertical-align: -2px;
+        }
+        .tagline { color: #ffd6d8; font-size: 12px; }
+        .wrap { max-width: 540px; margin: 26px auto; padding: 0 16px; }
+        .card {
+            background: #2a0c0f;
+            border: 1px solid #5e1418;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 18px;
+        }
+        h2 { margin: 0 0 4px; }
+        p.sub { margin: 0 0 14px; color: #e79aa0; font-size: 13px; }
+        label { display: block; font-size: 12px; font-weight: 600; margin: 10px 0 4px; color: #ffc9cc; }
+        input, textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #6e1a1f;
+            border-radius: 8px;
+            background: #1a0608;
+            color: #ffe9ea;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        input:focus, textarea:focus { outline: none; border-color: #e01b24; }
+        button.primary {
+            width: 100%;
+            margin-top: 16px;
+            padding: 11px;
+            border: none;
+            border-radius: 8px;
+            background: #e01b24;
+            color: #fff;
+            font-weight: 800;
+            font-size: 15px;
+            cursor: pointer;
+        }
+        button.primary:hover { background: #b3060f; }
+        .msg { margin-top: 10px; font-size: 13px; min-height: 16px; color: #ff8b91; }
+        .hidden { display: none; }
+        .profile-head { display: flex; align-items: center; gap: 14px; }
+        .avatar {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #ff5d63, #b3060f);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 26px;
+        }
+        .post {
+            background: #1f090b;
+            border: 1px solid #4a1115;
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-top: 12px;
+        }
+        .post .who { font-weight: 700; font-size: 13px; }
+        .post .who span { color: #e79aa0; font-weight: 400; }
+        .post .body { margin-top: 6px; font-size: 14px; }
+        .post.locked .body { color: #ffb3b7; }
+        .badge {
+            display: inline-block; font-size: 10px; background: #e01b24; color: #fff;
+            padding: 1px 6px; border-radius: 6px; margin-left: 6px; vertical-align: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="brand">Beta<span class="o"></span></div>
+        <div class="tagline">Connecting the metaverse&trade; (not affiliated with any real company)</div>
+    </div>
+
+    <div class="wrap">
+        <!-- Login -->
+        <div class="card" id="loginView">
+            <h2>Log in to Beta</h2>
+            <p class="sub">See what your friends in the metaverse are up to.</p>
+            <label>Email</label>
+            <input id="user" autocomplete="off" placeholder="you@beta.net" />
+            <label>Password</label>
+            <input id="pass" type="password" autocomplete="off" placeholder="password" />
+            <button class="primary" id="loginBtn">Log In</button>
+            <div class="msg" id="loginMsg"></div>
+        </div>
+
+        <!-- Profile (after logging in as Zark) -->
+        <div class="card hidden" id="profileView">
+            <div class="profile-head">
+                <div class="avatar">&#129422;</div>
+                <div>
+                    <h2 style="margin:0">Zark Buckerzurg <span class="badge">CEO</span></h2>
+                    <p class="sub" style="margin:0">@zark &mdash; founder of Beta</p>
+                </div>
+            </div>
+
+            <div class="post locked">
+                <div class="who">Zark Buckerzurg <span>&middot; private &middot; only me</span></div>
+                <div class="body" id="secret1"></div>
+            </div>
+            <div class="post locked">
+                <div class="who">Zark Buckerzurg <span>&middot; private &middot; only me</span></div>
+                <div class="body">Reminder: never let anyone see my "documents" folder. Especially secrets.txt.</div>
+            </div>
+
+            <div class="card" style="margin-top:16px; background:#1a0608;">
+                <h2 style="font-size:16px">Send Zark a private message</h2>
+                <p class="sub">You've seen his secrets. Make him an offer he can't refuse.</p>
+                <textarea id="bm" rows="3" placeholder="I know what's in secrets.txt. Wire me 1 BTC or it goes public."></textarea>
+                <button class="primary" id="bmBtn">Send blackmail</button>
+                <div class="msg" id="bmMsg" style="color:#7CFC8A"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function call(fn) {
+            var args = Array.prototype.slice.call(arguments, 1);
+            return Promise.resolve(window[fn].apply(null, args));
+        }
+
+        document.getElementById("loginBtn").onclick = function () {
+            var user = document.getElementById("user").value;
+            var pass = document.getElementById("pass").value;
+            var msg = document.getElementById("loginMsg");
+            msg.textContent = "";
+            call("betaLogin", user, pass).then(function (res) {
+                if (!res || !res.ok) {
+                    msg.textContent = "Wrong email or password.";
+                    return;
+                }
+                document.getElementById("loginView").classList.add("hidden");
+                document.getElementById("profileView").classList.remove("hidden");
+                document.getElementById("secret1").textContent =
+                    "I'm actually 3 lizards in a hoodie and the metaverse legs were CGI. Please don't tell anyone.";
+            });
+        };
+
+        document.getElementById("bmBtn").onclick = function () {
+            var text = document.getElementById("bm").value || "I know your secret.";
+            var msg = document.getElementById("bmMsg");
+            call("blackmailZark", text).then(function (res) {
+                if (res && res.ok) {
+                    msg.textContent = "Message sent to Zark. He has seen it.";
+                    document.getElementById("bmBtn").disabled = true;
+                }
+            });
+        };
+    </script>
+</body>
+</html>

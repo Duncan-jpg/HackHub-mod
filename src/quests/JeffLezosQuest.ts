@@ -1,0 +1,150 @@
+import { Quest, RegisterQuest, UI, Mail, Shell, Network } from "@hotbunny/hackhub-content-sdk";
+import { ARMAZON, LEZOS_BANK } from "../data/world";
+
+interface JeffLezosData {
+    visited: boolean;
+    hacked: boolean;
+    walletFound: boolean;
+    transferred: boolean;
+}
+
+/**
+ * Jeff Lezos quest — stop the richest man alive from getting any richer by
+ * draining his $50B fortune.
+ */
+@RegisterQuest
+export class JeffLezosQuest extends Quest<JeffLezosData> {
+
+    Name = "MillionairHack_JeffLezos";
+    Title = "Jeff Lezos";
+    Description = "Millionairs are to rich can you stop them getting richer?";
+    Group = "side" as const;
+
+    Employer = {
+        firstName: "Robin",
+        lastName: "Hood",
+        email: "robin@redistribute.net",
+    };
+
+    Rewards = {
+        xp: 1500,
+        money: 25_000,
+    };
+
+    HackhubPost = {
+        content:
+            "Jeff Lezos has more money than entire countries and he wants MORE. " +
+            "Someone with the right skills could break into armazon.org, find his " +
+            "wallet and... redistribute it. Are you that someone?",
+        author: { name: "Robin Hood" },
+        likes: 1337,
+        comments: [
+            { author: { name: "tax_the_rich" }, content: "finally someone said it" },
+            { author: { name: "anon99" }, content: "armazon's mainframe is a joke, try mhack" },
+        ],
+    };
+
+    Mails = [
+        {
+            title: "A job for someone with a conscience",
+            content:
+                "Jeff Lezos is the richest man alive and he won't stop hoarding.\n\n" +
+                "Here's the plan:\n" +
+                "1. Visit his store at armazon.org.\n" +
+                "2. Crack the mainframe with mhack (apt-get install mhack, then mhack -u armazon.org).\n" +
+                "3. Get the IP from `whois armazon.org`, then open NetInfiltrator with the IP + the user/password mhack gives you.\n" +
+                "4. His desktop has wallet.txt. It holds his Liberty Central Bank login.\n" +
+                "5. Log into lcb.com and move all $50,000,000,000 to your own account.\n\n" +
+                "Take from the rich. You know the rest.\n\n— Robin",
+        },
+    ];
+
+    Objectives = [
+        {
+            name: "visit_armazon",
+            description: "Go to the website armazon.org",
+            hint: "Open the FirebearBrowser and navigate to armazon.org.",
+            terminalCommand: "",
+        },
+        {
+            name: "hack_mainframe",
+            description: "Hack into the mainframe",
+            hint: "apt-get install mhack, then run: mhack -u armazon.org",
+            unlocksAfter: ["visit_armazon"],
+        },
+        {
+            name: "find_wallet",
+            description: "Find the wallet file on the desktop of J. Lezos",
+            hint: "whois armazon.org for the IP, then open NetInfiltrator with the IP + cracked login and open wallet.txt.",
+            unlocksAfter: ["hack_mainframe"],
+        },
+        {
+            name: "transfer_funds",
+            description: "Add the money to your own bank account",
+            hint: "Use the login from wallet.txt to sign into lcb.com and transfer the balance to your account.",
+            unlocksAfter: ["find_wallet"],
+        },
+    ];
+
+    CreateData(): JeffLezosData {
+        return { visited: false, hacked: false, walletFound: false, transferred: false };
+    }
+
+    OnStart() {
+        UI.toast("New quest: Jeff Lezos", "info");
+        this.sendMail(0);
+
+        // Make the target resolvable in-world so whois/nmap behave.
+        Network.registerDomain(ARMAZON.host, ARMAZON.ip);
+        Shell.addCommandData("whois", ARMAZON.host, {
+            ip: ARMAZON.ip,
+            domain: ARMAZON.host,
+            contact: "J. Lezos",
+            email: "abuse@armazon.org",
+            status: true,
+        });
+    }
+
+    OnObjectivesStart() {
+        this.Events.on("Browser.WebsiteOpened", (e) => {
+            const url = (e.url || "").toLowerCase();
+            const name = (e.siteName || "").toLowerCase();
+            if (url.includes(ARMAZON.host) || name === "armazon") {
+                this.SetData("visited", true);
+                this.completeObjective("visit_armazon");
+            }
+        });
+
+        this.Events.on("MillionairHack.MainframeHacked", (e) => {
+            if (e.host === ARMAZON.host) {
+                this.SetData("hacked", true);
+                this.completeObjective("hack_mainframe");
+            }
+        });
+
+        this.Events.on("MillionairHack.WalletOpened", (e) => {
+            if (e.ip === ARMAZON.ip) {
+                this.SetData("walletFound", true);
+                this.completeObjective("find_wallet");
+            }
+        });
+
+        this.Events.on("MillionairHack.FundsTransferred", () => {
+            this.SetData("transferred", true);
+            this.completeObjective("transfer_funds");
+        });
+    }
+
+    OnComplete() {
+        UI.toast("Jeff Lezos is no longer a billionaire. Nice.", "success");
+        Shell.removeCommandData("whois", ARMAZON.host);
+
+        Mail.send({
+            from: this.Employer!.email!,
+            subject: "You're a legend",
+            content:
+                `You actually did it. $${LEZOS_BANK.balance.toLocaleString()} gone from Lezos' account.\n\n` +
+                "The little guys thank you. On to the next one?\n\n— Robin",
+        });
+    }
+}

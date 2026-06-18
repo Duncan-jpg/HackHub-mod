@@ -1,0 +1,10 @@
+{
+    "id": "millionairhack",
+    "name": "MillionairHack",
+    "version": "1.0.0",
+    "apiVersion": 1,
+    "author": "Funny",
+    "description": "Millionairs are to rich can you stop them getting richer?",
+    "permissions": ["filesystem", "network", "events", "mail", "bank", "shell", "ui"],
+    "dependencies": []
+}
