@@ -1,10 +1,6 @@
-import { App, RegisterApp, Events, Files, Bank, UI } from "@hotbunny/hackhub-content-sdk";
+import { App, RegisterApp, Events, Files, UI } from "@hotbunny/hackhub-content-sdk";
 import appHTML from "./app.html";
-import { TARGETS, ARMAZON, BETANET, LEZOS_BANK } from "../../data/world";
-
-// Guard so the stolen fortune is only deposited once even if the player
-// re-downloads wallet.txt.
-let lezosDrained = false;
+import { TARGETS, ARMAZON, BETANET } from "../../data/world";
 
 // Plain, JSON-serialisable copy of the targets so the WebView can validate
 // credentials and render the file tree *synchronously* (no async bridge
@@ -74,8 +70,8 @@ export class NetInfiltrator extends App {
 
         /**
          * Download a file from the remote host to the player's own PC. When the
-         * downloaded file is J. Lezos' wallet.txt this also drains his $50B into
-         * the player's account and completes the Jeff Lezos quest.
+         * downloaded file is J. Lezos' wallet.txt this marks the wallet found so
+         * the player can take its login to sbs.com.
          */
         downloadFile: async (
             ip: string,
@@ -106,22 +102,6 @@ export class NetInfiltrator extends App {
             if (cleanIp === ARMAZON.ip && lower.startsWith("wallet")) {
                 Events.emit("MillionairHack.WalletOpened", { ip: cleanIp });
                 Events.emit("MillionairHack.WalletDownloaded", { ip: cleanIp });
-
-                if (!lezosDrained) {
-                    lezosDrained = true;
-                    const player = Bank.getPlayerAccount();
-                    Bank.transaction({
-                        amount: LEZOS_BANK.balance,
-                        description: "Transfer from J. Lezos (Liberty Central Bank)",
-                        from: { IBAN: LEZOS_BANK.iban, name: "Jeff Lezos" },
-                        to: player ? player.IBAN : undefined,
-                    });
-                    Events.emit("MillionairHack.FundsTransferred", { amount: LEZOS_BANK.balance });
-                    UI.toast(
-                        `$${LEZOS_BANK.balance.toLocaleString()} transferred to your account!`,
-                        "success",
-                    );
-                }
             }
             if (cleanIp === BETANET.ip && (lower.startsWith("secret") || lower.startsWith("account"))) {
                 Events.emit("MillionairHack.ZarkSecretsFound", { ip: cleanIp });
