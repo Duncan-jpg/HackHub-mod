@@ -15,15 +15,7 @@ const LEZOS_ACCOUNT = {
     balance: LEZOS_BANK.balance,
 };
 
-/** The player's own IBAN, shown on the deposit tab so they can enter it. */
-function resolvePlayerIban(): string {
-    try {
-        const player = Bank.getPlayerAccount();
-        return player && player.IBAN ? player.IBAN : "";
-    } catch (e) {
-        return "";
-    }
-}
+
 
 interface TransferResult {
     ok: boolean;
@@ -61,9 +53,6 @@ export class SecureBankingSkills extends Website {
     Exports = {
         /** Synchronous account data the WebView uses to validate the login. */
         account: LEZOS_ACCOUNT,
-
-        /** The player's own IBAN (value export), so the deposit tab can show it. */
-        myIban: resolvePlayerIban(),
 
         /**
          * Deposit the logged-in account's balance into the destination IBAN.
