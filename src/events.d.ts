@@ -11,6 +11,8 @@ declare module "@hotbunny/hackhub-content-sdk" {
         "MillionairHack.SystemBreached": { ip: string; host: string; user: string };
         /** Emitted by NetInfiltrator when J. Lezos' wallet.txt is opened. */
         "MillionairHack.WalletOpened": { ip: string };
+        /** Emitted by NetInfiltrator when J. Lezos' wallet.txt is downloaded. */
+        "MillionairHack.WalletDownloaded": { ip: string };
         /** Emitted by NetInfiltrator when Zark's secret files are opened. */
         "MillionairHack.ZarkSecretsFound": { ip: string };
         /** Emitted by lcb.com after the player transfers the stolen fortune. */

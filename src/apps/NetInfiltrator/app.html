@@ -87,6 +87,18 @@
         .node .icon { display: inline-block; width: 16px; }
         .file { cursor: pointer; color: #c8f7c8; }
         .file:hover { color: #39ff14; }
+        .dl {
+            margin-left: 8px;
+            font-family: inherit;
+            font-size: 10px;
+            background: #123012;
+            color: #39ff14;
+            border: 1px solid #2c6b2c;
+            border-radius: 3px;
+            padding: 1px 6px;
+            cursor: pointer;
+        }
+        .dl:hover { background: #39ff14; color: #041404; }
         .folder { color: #7fd17f; }
         .muted { color: #4d7a4d; }
     </style>
@@ -167,6 +179,16 @@
             fire("reportFileOpen", currentIp, fullName);
         }
 
+        function downloadFile(node) {
+            fire(
+                "downloadFile",
+                currentIp,
+                node.name,
+                node.extension || "",
+                node.data == null ? "" : node.data
+            );
+        }
+
         function renderNodes(nodes) {
             var ul = document.createElement("ul");
             nodes.forEach(function (node) {
@@ -200,6 +222,18 @@
                     fspan.textContent = fullName;
                     fspan.onclick = function () { openFile(node); };
                     label.appendChild(fspan);
+
+                    var dl = document.createElement("button");
+                    dl.className = "dl";
+                    dl.textContent = "Download";
+                    dl.onclick = (function (n) {
+                        return function (e) {
+                            e.stopPropagation();
+                            downloadFile(n);
+                        };
+                    })(node);
+                    label.appendChild(dl);
+
                     li.appendChild(label);
                 }
                 ul.appendChild(li);
