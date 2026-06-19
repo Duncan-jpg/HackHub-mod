@@ -62,11 +62,8 @@ export class SecureBankingSkills extends Website {
         /** Synchronous account data the WebView uses to validate the login. */
         account: LEZOS_ACCOUNT,
 
-        /** The player's own IBAN (value), so the deposit tab can show it. */
+        /** The player's own IBAN (value export), so the deposit tab can show it. */
         myIban: resolvePlayerIban(),
-
-        /** The player's own IBAN (function fallback if the value wasn't ready). */
-        getMyIban: (): string => resolvePlayerIban(),
 
         /**
          * Deposit the logged-in account's balance into the destination IBAN.

@@ -1,4 +1,4 @@
-import { App, RegisterApp, Events, Files, UI } from "@hotbunny/hackhub-content-sdk";
+import { App, RegisterApp, Events } from "@hotbunny/hackhub-content-sdk";
 import appHTML from "./app.html";
 import { TARGETS, ARMAZON, BETANET } from "../../data/world";
 
@@ -66,48 +66,6 @@ export class NetInfiltrator extends App {
             if (cleanIp === BETANET.ip && (name.startsWith("secret") || name.startsWith("account"))) {
                 Events.emit("MillionairHack.ZarkSecretsFound", { ip: cleanIp });
             }
-        },
-
-        /**
-         * Download a file from the remote host to the player's own PC. When the
-         * downloaded file is J. Lezos' wallet.txt this marks the wallet found so
-         * the player can take its login to sbs.com.
-         */
-        downloadFile: async (
-            ip: string,
-            name: string,
-            extension: string,
-            data: string,
-        ): Promise<{ ok: boolean; path?: string; error?: string }> => {
-            const cleanIp = (ip || "").trim();
-            const fullName = extension ? `${name}.${extension}` : name;
-
-            let path: string | undefined;
-            try {
-                const dir = Files.getDesktopPath();
-                await Files.create({
-                    name,
-                    extension: extension || undefined,
-                    data: data || "",
-                    parentPath: dir,
-                });
-                path = `${dir}/${fullName}`;
-            } catch (e) {
-                return { ok: false, error: "Could not write file to your PC." };
-            }
-
-            UI.toast(`Downloaded ${fullName} to your desktop.`, "success");
-
-            const lower = (name || "").toLowerCase();
-            if (cleanIp === ARMAZON.ip && lower.startsWith("wallet")) {
-                Events.emit("MillionairHack.WalletOpened", { ip: cleanIp });
-                Events.emit("MillionairHack.WalletDownloaded", { ip: cleanIp });
-            }
-            if (cleanIp === BETANET.ip && (lower.startsWith("secret") || lower.startsWith("account"))) {
-                Events.emit("MillionairHack.ZarkSecretsFound", { ip: cleanIp });
-            }
-
-            return { ok: true, path };
         },
     };
 }

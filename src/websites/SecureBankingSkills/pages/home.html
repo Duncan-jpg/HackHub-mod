@@ -169,17 +169,11 @@
             return a || null;
         }
         function money(n) { return "$" + Number(n).toLocaleString(); }
+        // Read the player's IBAN from a value export only. We never CALL a mod
+        // export for its return value here — doing so hangs/crashes the bridge.
         function getMyIban() {
             var v = ex("myIban");
-            if (typeof v === "string" && v) return v;
-            try {
-                var fn = ex("getMyIban");
-                if (typeof fn === "function") {
-                    var r = fn();
-                    if (typeof r === "string") return r;
-                }
-            } catch (e) { /* best-effort */ }
-            return "";
+            return (typeof v === "string") ? v : "";
         }
 
         document.getElementById("loginBtn").onclick = function () {
