@@ -2,14 +2,17 @@ import { App, RegisterApp, Events } from "@hotbunny/hackhub-content-sdk";
 import appHTML from "./app.html";
 import { TARGETS, ARMAZON, BETANET } from "../../data/world";
 
-interface InfiltrateResult {
-    ok: boolean;
-    error?: string;
-    host?: string;
-    owner?: string;
-    ip?: string;
-    tree?: unknown;
-}
+// Plain, JSON-serialisable copy of the targets so the WebView can validate
+// credentials and render the file tree *synchronously* (no async bridge
+// round-trip that could hang on "Connecting...").
+const TARGET_DATA = TARGETS.map((t) => ({
+    host: t.host,
+    ip: t.ip,
+    user: t.user,
+    password: t.password,
+    owner: t.owner,
+    fileSystem: t.fileSystem,
+}));
 
 /**
  * NetInfiltrator — desktop app that browses a remote file system once you feed
@@ -36,34 +39,20 @@ export class NetInfiltrator extends App {
     };
 
     Exports = {
-        /** Validate credentials and return the remote file tree on success. */
-        infiltrate: (ip: string, user: string, password: string): InfiltrateResult => {
+        /** Synchronous data the WebView uses to validate logins + render trees. */
+        targets: TARGET_DATA,
+
+        /** Fire-and-forget: tell the quests a host's file system was breached. */
+        reportBreach: (ip: string): void => {
             const cleanIp = (ip || "").trim();
-            const cleanUser = (user || "").trim();
-            const cleanPass = (password || "").trim();
-
             const target = TARGETS.find((t) => t.ip === cleanIp);
-
-            if (!target) {
-                return { ok: false, error: `No route to host ${cleanIp || "(empty)"}.` };
+            if (target) {
+                Events.emit("MillionairHack.SystemBreached", {
+                    ip: target.ip,
+                    host: target.host,
+                    user: target.user,
+                });
             }
-            if (target.user !== cleanUser || target.password !== cleanPass) {
-                return { ok: false, error: "Authentication failed: bad user or password." };
-            }
-
-            Events.emit("MillionairHack.SystemBreached", {
-                ip: target.ip,
-                host: target.host,
-                user: target.user,
-            });
-
-            return {
-                ok: true,
-                host: target.host,
-                owner: target.owner,
-                ip: target.ip,
-                tree: target.fileSystem,
-            };
         },
 
         /** Called by the UI when the player opens a file with contents. */
