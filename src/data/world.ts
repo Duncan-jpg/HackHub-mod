@@ -28,6 +28,7 @@ export const LCB_HOST = "lcb.com";
 /** Jeff Lezos' personal bank login, leaked inside wallet.txt. */
 export const LEZOS_BANK = {
     host: LCB_HOST,
+    id: "JLEZOS-50B",
     username: "j.lezos",
     password: "Liberty$50Bil",
     iban: "LC50ARMAZON0000000050B",
@@ -38,6 +39,7 @@ const WALLET_TXT = [
     "LIBERTY CENTRAL BANK — saved login",
     "------------------------------------",
     `site:     https://${LEZOS_BANK.host}`,
+    `id:       ${LEZOS_BANK.id}`,
     `username: ${LEZOS_BANK.username}`,
     `password: ${LEZOS_BANK.password}`,
     `iban:     ${LEZOS_BANK.iban}`,

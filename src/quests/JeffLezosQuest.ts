@@ -53,8 +53,8 @@ export class JeffLezosQuest extends Quest<JeffLezosData> {
                 "1. Visit his store at armazon.org.\n" +
                 "2. Crack the mainframe with mhack (apt-get install mhack, then mhack -u armazon.org).\n" +
                 "3. Get the IP from `whois armazon.org`, then open NetInfiltrator with the IP + the user/password mhack gives you.\n" +
-                "4. His desktop has wallet.txt. It holds his Liberty Central Bank login.\n" +
-                "5. Log into lcb.com and move all $50,000,000,000 to your own account.\n\n" +
+                "4. His desktop has wallet.txt with his Liberty Central Bank login (id, user, password).\n" +
+                "5. Download wallet.txt from NetInfiltrator — that grabs his $50,000,000,000 straight into your account.\n\n" +
                 "Take from the rich. You know the rest.\n\n— Robin",
         },
     ];
@@ -75,13 +75,13 @@ export class JeffLezosQuest extends Quest<JeffLezosData> {
         {
             name: "find_wallet",
             description: "Find the wallet file on the desktop of J. Lezos",
-            hint: "whois armazon.org for the IP, then open NetInfiltrator with the IP + cracked login and open wallet.txt.",
+            hint: "whois armazon.org for the IP, then open NetInfiltrator with the IP + cracked login and open J. Lezos' desktop/wallet.txt.",
             unlocksAfter: ["hack_mainframe"],
         },
         {
             name: "transfer_funds",
             description: "Add the money to your own bank account",
-            hint: "Use the login from wallet.txt to sign into lcb.com and transfer the balance to your account.",
+            hint: "Click Download on wallet.txt in NetInfiltrator — J. Lezos' $50,000,000,000 lands in your account.",
             unlocksAfter: ["find_wallet"],
         },
     ];
@@ -121,6 +121,12 @@ export class JeffLezosQuest extends Quest<JeffLezosData> {
         });
 
         this.Events.on("MillionairHack.WalletOpened", (e) => {
+            if (e.ip === ARMAZON.ip) {
+                this.completeObjective("find_wallet");
+            }
+        });
+
+        this.Events.on("MillionairHack.WalletDownloaded", (e) => {
             if (e.ip === ARMAZON.ip) {
                 this.completeObjective("find_wallet");
             }
