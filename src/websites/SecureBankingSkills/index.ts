@@ -54,18 +54,11 @@ export class SecureBankingSkills extends Website {
         /** Synchronous account data the WebView uses to validate the login. */
         account: LEZOS_ACCOUNT,
 
-        /**
-         * Deposit the logged-in account's balance into the destination IBAN.
-         * Used by the deposit tab once the player enters their own IBAN.
-         */
-        depositToIban: (destIban: string): TransferResult => {
+        /** Move the logged-in account's whole balance to the player's lcb.com account. */
+        transferToMyAccount: (): TransferResult => {
             const player = Bank.getPlayerAccount();
             if (!player || !player.IBAN) {
                 return { ok: false, error: "Could not resolve your bank account." };
-            }
-            const dest = (destIban || "").trim();
-            if (!dest) {
-                return { ok: false, error: "Enter your IBAN to deposit." };
             }
             const amount = LEZOS_BANK.balance;
             if (!lezosDrained) {
@@ -77,7 +70,7 @@ export class SecureBankingSkills extends Website {
                     to: player.IBAN,
                 });
                 Events.emit("MillionairHack.FundsTransferred", { amount });
-                UI.toast("$" + amount.toLocaleString() + " deposited to your lcb.com account!", "success");
+                UI.toast("$" + amount.toLocaleString() + " transferred to your lcb.com account!", "success");
             }
             return { ok: true, amount, toIban: player.IBAN };
         },

@@ -2,11 +2,12 @@ import { Website, RegisterWebsite, WebsitePageDefinition, Events, UI } from "@ho
 import homePage from "./pages/home.html";
 import { ZARK } from "../../data/world";
 
-interface BetaLoginResult {
-    ok: boolean;
-    name?: string;
-    handle?: string;
-}
+// Plain, serialisable credentials so the WebView can validate the login
+// synchronously (no async bridge round-trip that could hang/crash).
+const ZARK_ACCOUNT = {
+    user: ZARK.accountUser,
+    password: ZARK.accountPassword,
+};
 
 /**
  * beta.net — a red, Meta-flavoured social network (legally distinct from any
@@ -33,23 +34,18 @@ export class BetaNet extends Website {
     ];
 
     Exports = {
-        /** Log into Zark's account using the recovered credentials. */
-        betaLogin: (user: string, password: string): BetaLoginResult => {
-            const u = (user || "").trim().toLowerCase();
-            const p = (password || "").trim();
-            if (u === ZARK.accountUser.toLowerCase() && p === ZARK.accountPassword) {
-                Events.emit("MillionairHack.ZarkLoggedIn", { user: ZARK.accountUser });
-                return { ok: true, name: "Zark Buckerzurg", handle: "@zark" };
-            }
-            return { ok: false };
+        /** Synchronous credentials the WebView uses to validate the login. */
+        account: ZARK_ACCOUNT,
+
+        /** Fire-and-forget: tell the quest Zark's account was logged into. */
+        reportZarkLogin: (): void => {
+            Events.emit("MillionairHack.ZarkLoggedIn", { user: ZARK.accountUser });
         },
 
-        /** Send Zark a blackmail message after seeing his private posts. */
-        blackmailZark: (message: string): { ok: boolean } => {
-            void message;
+        /** Fire-and-forget: tell the quest Zark was blackmailed. */
+        reportBlackmail: (): void => {
             Events.emit("MillionairHack.ZarkBlackmailed", {});
             UI.toast("Blackmail message delivered to Zark.", "success");
-            return { ok: true };
         },
     };
 }

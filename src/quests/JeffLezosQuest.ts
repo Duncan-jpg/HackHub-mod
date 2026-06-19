@@ -49,12 +49,8 @@ export class JeffLezosQuest extends Quest<JeffLezosData> {
             title: "A job for someone with a conscience",
             content:
                 "Jeff Lezos is the richest man alive and he won't stop hoarding.\n\n" +
-                "Here's the plan:\n" +
-                "1. Visit his store at armazon.org.\n" +
-                "2. Crack the mainframe with mhack (apt-get install mhack, then mhack -u armazon.org).\n" +
-                "3. Get the IP from `whois armazon.org`, then open NetInfiltrator with the IP + the user/password mhack gives you.\n" +
-                "4. His desktop has wallet.txt with his Liberty Central Bank login (username, password, IBAN). Open it and note them down.\n" +
-                "5. Go to sbs.com, log in with that username + password + IBAN, then on the Deposit tab enter your own IBAN to move all $50,000,000,000 into your lcb.com account.\n\n" +
+                "He's got billions sitting in one account. I want it redistributed.\n" +
+                "You're resourceful — you'll work out how to get in and where he keeps it.\n\n" +
                 "Take from the rich. You know the rest.\n\n— Robin",
         },
     ];
@@ -64,25 +60,42 @@ export class JeffLezosQuest extends Quest<JeffLezosData> {
             name: "visit_armazon",
             description: "Go to the website armazon.org",
             hint: "Open the FirebearBrowser and navigate to armazon.org.",
-            terminalCommand: "",
+            trigger: {
+                event: "Browser.WebsiteOpened",
+                condition: (d: { url?: string; siteName?: string }) =>
+                    (d.url || "").toLowerCase().includes(ARMAZON.host) ||
+                    (d.siteName || "").toLowerCase() === "armazon",
+            },
         },
         {
             name: "hack_mainframe",
             description: "Hack into the mainframe",
             hint: "apt-get install mhack, then run: mhack -u armazon.org",
             unlocksAfter: ["visit_armazon"],
+            trigger: {
+                event: "MillionairHack.MainframeHacked",
+                condition: (d: { host?: string }) => d.host === ARMAZON.host,
+            },
         },
         {
             name: "find_wallet",
             description: "Find the wallet file on the desktop of J. Lezos",
             hint: "whois armazon.org for the IP, then connect in NetInfiltrator with the IP + cracked login. Open desktop/wallet.txt to read his bank details.",
             unlocksAfter: ["hack_mainframe"],
+            trigger: {
+                event: "MillionairHack.SystemBreached",
+                condition: (d: { ip?: string }) => d.ip === ARMAZON.ip,
+            },
         },
         {
             name: "transfer_funds",
             description: "Add the money to your own bank account",
-            hint: "Open sbs.com, log in with wallet.txt's username + password + IBAN, then on the Deposit tab enter your own IBAN and deposit the balance.",
+            hint: "Open sbs.com, log in with wallet.txt's username + password + IBAN, then click Transfer to move the balance to your lcb.com account.",
             unlocksAfter: ["find_wallet"],
+            trigger: {
+                event: "MillionairHack.FundsTransferred",
+                condition: () => true,
+            },
         },
     ];
 
