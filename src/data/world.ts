@@ -45,6 +45,7 @@ const WALLET_TXT = [
     `iban:     ${LEZOS_BANK.iban}`,
     `balance:  $${LEZOS_BANK.balance.toLocaleString()}`,
     "",
+    "tip: access remotely via sbs.com (username + password + iban).",
     "do NOT share. - J.L.",
 ].join("\n");
 

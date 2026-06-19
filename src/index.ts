@@ -3,6 +3,7 @@ import "./commands/MhackCommand";
 import "./apps/NetInfiltrator";
 import "./websites/Armazon";
 import "./websites/BetaNet";
+import "./websites/SecureBankingSkills";
 import "./quests/JeffLezosQuest";
 import "./quests/ZarkBuckerzurgQuest";
 
