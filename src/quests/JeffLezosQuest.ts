@@ -53,8 +53,8 @@ export class JeffLezosQuest extends Quest<JeffLezosData> {
                 "1. Visit his store at armazon.org.\n" +
                 "2. Crack the mainframe with mhack (apt-get install mhack, then mhack -u armazon.org).\n" +
                 "3. Get the IP from `whois armazon.org`, then open NetInfiltrator with the IP + the user/password mhack gives you.\n" +
-                "4. His desktop has wallet.txt with his Liberty Central Bank login (username, password, IBAN). Download it.\n" +
-                "5. Go to sbs.com, log in with that username + password + IBAN, and deposit all $50,000,000,000 into your own lcb.com account.\n\n" +
+                "4. His desktop has wallet.txt with his Liberty Central Bank login (username, password, IBAN). Open it and note them down.\n" +
+                "5. Go to sbs.com, log in with that username + password + IBAN, then on the Deposit tab enter your own IBAN to move all $50,000,000,000 into your lcb.com account.\n\n" +
                 "Take from the rich. You know the rest.\n\n— Robin",
         },
     ];
@@ -75,7 +75,7 @@ export class JeffLezosQuest extends Quest<JeffLezosData> {
         {
             name: "find_wallet",
             description: "Find the wallet file on the desktop of J. Lezos",
-            hint: "whois armazon.org for the IP, then connect in NetInfiltrator with the IP + cracked login. Open/download desktop/wallet.txt for his bank details.",
+            hint: "whois armazon.org for the IP, then connect in NetInfiltrator with the IP + cracked login. Open desktop/wallet.txt to read his bank details.",
             unlocksAfter: ["hack_mainframe"],
         },
         {
