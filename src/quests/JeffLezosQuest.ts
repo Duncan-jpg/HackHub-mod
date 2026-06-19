@@ -75,13 +75,13 @@ export class JeffLezosQuest extends Quest<JeffLezosData> {
         {
             name: "find_wallet",
             description: "Find the wallet file on the desktop of J. Lezos",
-            hint: "whois armazon.org for the IP, then open NetInfiltrator with the IP + cracked login and open J. Lezos' desktop/wallet.txt.",
+            hint: "whois armazon.org for the IP, then connect in NetInfiltrator with the IP + cracked login. Open/download desktop/wallet.txt for his bank details.",
             unlocksAfter: ["hack_mainframe"],
         },
         {
             name: "transfer_funds",
             description: "Add the money to your own bank account",
-            hint: "Open sbs.com, log in with wallet.txt's username + password + IBAN, then deposit the balance to your lcb.com account.",
+            hint: "Open sbs.com, log in with wallet.txt's username + password + IBAN, then on the Deposit tab enter your own IBAN and deposit the balance.",
             unlocksAfter: ["find_wallet"],
         },
     ];
@@ -105,35 +105,56 @@ export class JeffLezosQuest extends Quest<JeffLezosData> {
         });
     }
 
+    // Objectives in order. Completing one defensively completes everything
+    // before it, so progress never gets stuck if an earlier event was missed.
+    private readonly order = ["visit_armazon", "hack_mainframe", "find_wallet", "transfer_funds"];
+
+    private complete(upTo: string) {
+        const idx = this.order.indexOf(upTo);
+        if (idx < 0) return;
+        for (let i = 0; i <= idx; i++) {
+            this.completeObjective(this.order[i]);
+        }
+    }
+
     OnObjectivesStart() {
         this.Events.on("Browser.WebsiteOpened", (e) => {
             const url = (e.url || "").toLowerCase();
             const name = (e.siteName || "").toLowerCase();
             if (url.includes(ARMAZON.host) || name === "armazon") {
-                this.completeObjective("visit_armazon");
+                this.complete("visit_armazon");
             }
         });
 
         this.Events.on("MillionairHack.MainframeHacked", (e) => {
             if (e.host === ARMAZON.host) {
-                this.completeObjective("hack_mainframe");
+                this.complete("hack_mainframe");
+            }
+        });
+
+        // The wallet objective is done as soon as NetInfiltrator connects to
+        // J. Lezos' host (a valid IP/user/password reveals the file system).
+        this.Events.on("MillionairHack.SystemBreached", (e) => {
+            if (e.ip === ARMAZON.ip) {
+                this.complete("find_wallet");
             }
         });
 
         this.Events.on("MillionairHack.WalletOpened", (e) => {
             if (e.ip === ARMAZON.ip) {
-                this.completeObjective("find_wallet");
+                this.complete("find_wallet");
             }
         });
 
         this.Events.on("MillionairHack.WalletDownloaded", (e) => {
             if (e.ip === ARMAZON.ip) {
-                this.completeObjective("find_wallet");
+                this.complete("find_wallet");
             }
         });
 
+        // The whole quest completes when the stolen funds are deposited on sbs.com.
         this.Events.on("MillionairHack.FundsTransferred", () => {
-            this.completeObjective("transfer_funds");
+            this.complete("transfer_funds");
         });
     }
 

@@ -15,6 +15,16 @@ const LEZOS_ACCOUNT = {
     balance: LEZOS_BANK.balance,
 };
 
+/** The player's own IBAN, shown on the deposit tab so they can enter it. */
+function resolvePlayerIban(): string {
+    try {
+        const player = Bank.getPlayerAccount();
+        return player && player.IBAN ? player.IBAN : "";
+    } catch (e) {
+        return "";
+    }
+}
+
 interface TransferResult {
     ok: boolean;
     error?: string;
@@ -52,11 +62,24 @@ export class SecureBankingSkills extends Website {
         /** Synchronous account data the WebView uses to validate the login. */
         account: LEZOS_ACCOUNT,
 
-        /** Move the logged-in account's balance to the player's lcb.com account. */
-        transferToMyAccount: (): TransferResult => {
+        /** The player's own IBAN (value), so the deposit tab can show it. */
+        myIban: resolvePlayerIban(),
+
+        /** The player's own IBAN (function fallback if the value wasn't ready). */
+        getMyIban: (): string => resolvePlayerIban(),
+
+        /**
+         * Deposit the logged-in account's balance into the destination IBAN.
+         * Used by the deposit tab once the player enters their own IBAN.
+         */
+        depositToIban: (destIban: string): TransferResult => {
             const player = Bank.getPlayerAccount();
             if (!player || !player.IBAN) {
                 return { ok: false, error: "Could not resolve your bank account." };
+            }
+            const dest = (destIban || "").trim();
+            if (!dest) {
+                return { ok: false, error: "Enter your IBAN to deposit." };
             }
             const amount = LEZOS_BANK.balance;
             if (!lezosDrained) {
@@ -68,7 +91,7 @@ export class SecureBankingSkills extends Website {
                     to: player.IBAN,
                 });
                 Events.emit("MillionairHack.FundsTransferred", { amount });
-                UI.toast("$" + amount.toLocaleString() + " transferred to your lcb.com account!", "success");
+                UI.toast("$" + amount.toLocaleString() + " deposited to your lcb.com account!", "success");
             }
             return { ok: true, amount, toIban: player.IBAN };
         },

@@ -95,25 +95,37 @@ export class ZarkBuckerzurgQuest extends Quest<ZarkData> {
         });
     }
 
+    // Objectives in order. Completing one defensively completes everything
+    // before it, so progress never gets stuck if an earlier event was missed.
+    private readonly order = ["access_fs", "login_zark", "blackmail_zark"];
+
+    private complete(upTo: string) {
+        const idx = this.order.indexOf(upTo);
+        if (idx < 0) return;
+        for (let i = 0; i <= idx; i++) {
+            this.completeObjective(this.order[i]);
+        }
+    }
+
     OnObjectivesStart() {
         this.Events.on("MillionairHack.SystemBreached", (e) => {
             if (e.ip === BETANET.ip) {
-                this.completeObjective("access_fs");
+                this.complete("access_fs");
             }
         });
 
         this.Events.on("MillionairHack.ZarkLoggedIn", () => {
-            this.completeObjective("login_zark");
+            this.complete("login_zark");
         });
 
         this.Events.on("MillionairHack.ZarkBlackmailed", () => {
-            this.completeObjective("blackmail_zark");
+            this.complete("blackmail_zark");
         });
 
         // Also accept blackmail sent the classic way: an email to Zark.
         this.Events.on("Mail.Sent", (e) => {
             if ((e.to || "").toLowerCase().includes(ZARK.blackmailEmail)) {
-                this.completeObjective("blackmail_zark");
+                this.complete("blackmail_zark");
             }
         });
     }

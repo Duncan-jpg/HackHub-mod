@@ -62,6 +62,22 @@
         .balance .lbl { font-size: 12px; color: #5a6b85; }
         .row { display: flex; justify-content: space-between; font-size: 13px; padding: 6px 0; border-bottom: 1px solid #eef1f6; }
         .hidden { display: none; }
+        .tabs { display: flex; gap: 6px; margin: 4px 0 16px; }
+        .tab {
+            flex: 1;
+            padding: 9px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            border: 1px solid #c7d0e0;
+            border-radius: 6px;
+            background: #f3f6fb;
+            color: #41506b;
+            cursor: pointer;
+        }
+        .tab.active { background: #1d6fe0; color: #fff; border-color: #1d6fe0; }
+        .hint { font-size: 11px; color: #5a6b85; margin-top: 4px; }
+        .myiban { font-family: monospace; font-weight: 700; color: #0b2545; word-break: break-all; }
         .done {
             text-align: center;
             margin-top: 14px;
@@ -99,15 +115,32 @@
         <div class="card hidden" id="acctView">
             <h2 id="welcome">Welcome</h2>
             <p class="sub">Liberty Central Bank &mdash; current account</p>
-            <div class="balance">
-                <div class="num" id="balNum">$0</div>
-                <div class="lbl">Available balance</div>
+
+            <div class="tabs">
+                <div class="tab active" id="tabOverview">Overview</div>
+                <div class="tab" id="tabDeposit">Deposit</div>
             </div>
-            <div class="row"><span>Account holder</span><b id="holder"></b></div>
-            <div class="row"><span>IBAN</span><b id="ibanOut"></b></div>
-            <button class="primary" id="transferBtn">Deposit entire balance to my lcb.com account</button>
-            <div class="msg" id="acctMsg"></div>
-            <div class="done hidden" id="doneBox"></div>
+
+            <!-- Overview tab -->
+            <div id="overviewPane">
+                <div class="balance">
+                    <div class="num" id="balNum">$0</div>
+                    <div class="lbl">Available balance</div>
+                </div>
+                <div class="row"><span>Account holder</span><b id="holder"></b></div>
+                <div class="row"><span>IBAN</span><b id="ibanOut"></b></div>
+            </div>
+
+            <!-- Deposit tab -->
+            <div id="depositPane" class="hidden">
+                <p class="sub">Deposit this account's balance into another account.</p>
+                <label>Your IBAN</label>
+                <input id="destIban" autocomplete="off" placeholder="your IBAN" />
+                <div class="hint">Your lcb.com account IBAN: <span class="myiban" id="myIbanHint">(open your bank app to find it)</span></div>
+                <button class="primary" id="depositBtn">Deposit balance</button>
+                <div class="msg" id="acctMsg"></div>
+                <div class="done hidden" id="doneBox"></div>
+            </div>
         </div>
     </div>
 
@@ -136,6 +169,18 @@
             return a || null;
         }
         function money(n) { return "$" + Number(n).toLocaleString(); }
+        function getMyIban() {
+            var v = ex("myIban");
+            if (typeof v === "string" && v) return v;
+            try {
+                var fn = ex("getMyIban");
+                if (typeof fn === "function") {
+                    var r = fn();
+                    if (typeof r === "string") return r;
+                }
+            } catch (e) { /* best-effort */ }
+            return "";
+        }
 
         document.getElementById("loginBtn").onclick = function () {
             var user = (document.getElementById("user").value || "").trim();
@@ -162,21 +207,59 @@
             document.getElementById("holder").textContent = acct.owner;
             document.getElementById("ibanOut").textContent = acct.iban;
             document.getElementById("balNum").textContent = money(acct.balance);
+
+            var myIban = getMyIban();
+            if (myIban) {
+                document.getElementById("myIbanHint").textContent = myIban;
+            }
         };
 
-        document.getElementById("transferBtn").onclick = function () {
-            var btn = document.getElementById("transferBtn");
+        // Tab switching between Overview and Deposit.
+        document.getElementById("tabOverview").onclick = function () {
+            this.classList.add("active");
+            document.getElementById("tabDeposit").classList.remove("active");
+            document.getElementById("overviewPane").classList.remove("hidden");
+            document.getElementById("depositPane").classList.add("hidden");
+        };
+        document.getElementById("tabDeposit").onclick = function () {
+            this.classList.add("active");
+            document.getElementById("tabOverview").classList.remove("active");
+            document.getElementById("depositPane").classList.remove("hidden");
+            document.getElementById("overviewPane").classList.add("hidden");
+        };
+
+        document.getElementById("depositBtn").onclick = function () {
+            var btn = document.getElementById("depositBtn");
             var msg = document.getElementById("acctMsg");
             var acct = getAccount();
+            var dest = (document.getElementById("destIban").value || "").trim();
+            msg.className = "msg";
+            msg.textContent = "";
+
+            if (!dest) {
+                msg.className = "msg err";
+                msg.textContent = "Enter your IBAN to deposit.";
+                return;
+            }
+
+            // If we know the player's IBAN, require the entered one to match it.
+            var myIban = getMyIban();
+            if (myIban && dest.toLowerCase() !== myIban.toLowerCase()) {
+                msg.className = "msg err";
+                msg.textContent = "That IBAN doesn't match your lcb.com account.";
+                return;
+            }
+
             btn.disabled = true;
-            msg.textContent = "Processing transfer\u2026";
+            msg.textContent = "Processing deposit\u2026";
 
             // Runs the privileged Bank transfer on the mod side (fire-and-forget).
-            fire("transferToMyAccount");
+            fire("depositToIban", dest);
 
             // Optimistically reflect the result in the UI.
             msg.textContent = "";
             document.getElementById("balNum").textContent = money(0);
+            document.getElementById("destIban").disabled = true;
             var done = document.getElementById("doneBox");
             done.classList.remove("hidden");
             done.textContent = money(acct ? acct.balance : 0) + " deposited to your lcb.com account.";
