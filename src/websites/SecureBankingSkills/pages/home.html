@@ -115,32 +115,15 @@
         <div class="card hidden" id="acctView">
             <h2 id="welcome">Welcome</h2>
             <p class="sub">Liberty Central Bank &mdash; current account</p>
-
-            <div class="tabs">
-                <div class="tab active" id="tabOverview">Overview</div>
-                <div class="tab" id="tabDeposit">Deposit</div>
+            <div class="balance">
+                <div class="num" id="balNum">$0</div>
+                <div class="lbl">Available balance</div>
             </div>
-
-            <!-- Overview tab -->
-            <div id="overviewPane">
-                <div class="balance">
-                    <div class="num" id="balNum">$0</div>
-                    <div class="lbl">Available balance</div>
-                </div>
-                <div class="row"><span>Account holder</span><b id="holder"></b></div>
-                <div class="row"><span>IBAN</span><b id="ibanOut"></b></div>
-            </div>
-
-            <!-- Deposit tab -->
-            <div id="depositPane" class="hidden">
-                <p class="sub">Deposit this account's balance into another account.</p>
-                <label>Your IBAN</label>
-                <input id="destIban" autocomplete="off" placeholder="your lcb.com IBAN" />
-                <div class="hint">Enter your own lcb.com IBAN (find it in your bank app) to receive the funds.</div>
-                <button class="primary" id="depositBtn">Deposit balance</button>
-                <div class="msg" id="acctMsg"></div>
-                <div class="done hidden" id="doneBox"></div>
-            </div>
+            <div class="row"><span>Account holder</span><b id="holder"></b></div>
+            <div class="row"><span>IBAN</span><b id="ibanOut"></b></div>
+            <button class="primary" id="transferBtn">Transfer entire balance to my lcb.com account</button>
+            <div class="msg" id="acctMsg"></div>
+            <div class="done hidden" id="doneBox"></div>
         </div>
     </div>
 
@@ -197,47 +180,23 @@
             document.getElementById("balNum").textContent = money(acct.balance);
         };
 
-        // Tab switching between Overview and Deposit.
-        document.getElementById("tabOverview").onclick = function () {
-            this.classList.add("active");
-            document.getElementById("tabDeposit").classList.remove("active");
-            document.getElementById("overviewPane").classList.remove("hidden");
-            document.getElementById("depositPane").classList.add("hidden");
-        };
-        document.getElementById("tabDeposit").onclick = function () {
-            this.classList.add("active");
-            document.getElementById("tabOverview").classList.remove("active");
-            document.getElementById("depositPane").classList.remove("hidden");
-            document.getElementById("overviewPane").classList.add("hidden");
-        };
-
-        document.getElementById("depositBtn").onclick = function () {
-            var btn = document.getElementById("depositBtn");
+        document.getElementById("transferBtn").onclick = function () {
+            var btn = document.getElementById("transferBtn");
             var msg = document.getElementById("acctMsg");
             var acct = getAccount();
-            var dest = (document.getElementById("destIban").value || "").trim();
-            msg.className = "msg";
-            msg.textContent = "";
-
-            if (!dest) {
-                msg.className = "msg err";
-                msg.textContent = "Enter your IBAN to deposit.";
-                return;
-            }
-
             btn.disabled = true;
-            msg.textContent = "Processing deposit\u2026";
+            msg.className = "msg";
+            msg.textContent = "Processing transfer\u2026";
 
             // Runs the privileged Bank transfer on the mod side (fire-and-forget).
-            fire("depositToIban", dest);
+            fire("transferToMyAccount");
 
             // Optimistically reflect the result in the UI.
             msg.textContent = "";
             document.getElementById("balNum").textContent = money(0);
-            document.getElementById("destIban").disabled = true;
             var done = document.getElementById("doneBox");
             done.classList.remove("hidden");
-            done.textContent = money(acct ? acct.balance : 0) + " deposited to your lcb.com account.";
+            done.textContent = money(acct ? acct.balance : 0) + " transferred to your lcb.com account.";
             btn.classList.add("hidden");
         };
     </script>

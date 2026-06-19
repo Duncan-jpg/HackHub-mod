@@ -49,10 +49,8 @@ export class ZarkBuckerzurgQuest extends Quest<ZarkData> {
             title: "Next target: Zark Buckerzurg",
             content:
                 "Zark Buckerzurg runs beta.net and he's hiding something big.\n\n" +
-                "Plan:\n" +
-                "1. Break into beta.net's file system: whois beta.net for the IP, mhack -u beta.net for the login, then open it in NetInfiltrator.\n" +
-                "2. His files contain his personal account login. Use it to log into beta.net as Zark.\n" +
-                "3. Read his private posts, then blackmail him.\n\n" +
+                "Get inside, find out who he really is, and make him pay for it.\n" +
+                "You've done this before — you know where to start digging.\n\n" +
                 "Make him sweat.\n\n— Robin",
         },
     ];
@@ -62,18 +60,30 @@ export class ZarkBuckerzurgQuest extends Quest<ZarkData> {
             name: "access_fs",
             description: "Acquire access to the file system of beta.net",
             hint: "whois beta.net, mhack -u beta.net, then connect with NetInfiltrator.",
+            trigger: {
+                event: "MillionairHack.SystemBreached",
+                condition: (d: { ip?: string }) => d.ip === BETANET.ip,
+            },
         },
         {
             name: "login_zark",
             description: "How do you log into Zark's account",
             hint: "His login is in account.txt on his desktop. Use it on beta.net.",
             unlocksAfter: ["access_fs"],
+            trigger: {
+                event: "MillionairHack.ZarkLoggedIn",
+                condition: () => true,
+            },
         },
         {
             name: "blackmail_zark",
             description: "Blackmail Zark",
             hint: "Once logged in as Zark, read his private posts and send him a blackmail message.",
             unlocksAfter: ["login_zark"],
+            trigger: {
+                event: "MillionairHack.ZarkBlackmailed",
+                condition: () => true,
+            },
         },
     ];
 
